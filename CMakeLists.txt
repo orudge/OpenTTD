@@ -110,6 +110,7 @@ add_custom_target(find_version
         ${CMAKE_COMMAND}
                 -DFIND_VERSION_BINARY_DIR=${CMAKE_BINARY_DIR}/generated
                 -DCPACK_BINARY_DIR=${CMAKE_BINARY_DIR}
+                $<$<PLATFORM_ID:Windows>:-DWIN32=TRUE>
                 -P "${CMAKE_SOURCE_DIR}/cmake/scripts/FindVersion.cmake"
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         BYPRODUCTS ${GENERATED_SOURCE_FILES}
@@ -130,9 +131,62 @@ compile_flags()
 add_executable(openttd WIN32 ${GENERATED_SOURCE_FILES})
 # All other files are added via target_sources()
 
+set(host_tools_list strgen settingsgen)
+
+# If compiling for ARM/ARM64 using Visual Studio on an x86/x64 host, we need to build certain tools as x86/x64.
+if((CMAKE_VS_PLATFORM_NAME STREQUAL "ARM" OR CMAKE_VS_PLATFORM_NAME STREQUAL "ARM64") AND NOT(CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "ARM64" OR CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "ARM"))
+	set(CMAKE_CROSSCOMPILING YES)
+	set(CROSSCOMPILING_WITH_MSVC YES)
+endif()
+
+if(CMAKE_CROSSCOMPILING)
+    # Pawn off the creation of the host utilities into its own dedicated space
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/host_tools)
+    file(TO_NATIVE_PATH ${CMAKE_COMMAND} native_cmake_command)
+    file(TO_NATIVE_PATH ${CMAKE_CURRENT_SOURCE_DIR} native_cmake_current_source_dir)
+	
+	if (CROSSCOMPILING_WITH_MSVC)
+		execute_process(
+			COMMAND "${native_cmake_command}" "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}" "-DCMAKE_GENERATOR=${CMAKE_GENERATOR}" "-DCMAKE_GENERATOR_PLATFORM=${CMAKE_VS_PLATFORM_TOOLSET_HOST_ARCHITECTURE}"
+					"${native_cmake_current_source_dir}"
+			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/host_tools
+		)
+	else()
+		execute_process(
+			COMMAND "${native_cmake_command}" "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}" "${native_cmake_current_source_dir}"
+					"-DCMAKE_C_COMPILER=/usr/bin/cc" "-DCMAKE_CXX_COMPILER=/usr/bin/c++"
+			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/host_tools
+		)
+	endif()
+	
+    add_custom_target(host_tools
+        COMMAND ${CMAKE_COMMAND} --build . --target host_tools --config $<CONFIG>
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/host_tools
+    )
+    include(${CMAKE_CURRENT_BINARY_DIR}/host_tools/host_tools.cmake)
+
+    foreach(tgt IN ITEMS ${host_tools_list})
+        add_dependencies(host${tgt} host_tools)
+    endforeach()
+
+else()
+    # Add an empty target, host tools are built inplace
+    add_custom_target(host_tools
+        DEPENDS ${host_tools_list}
+    )
+endif()
+
 include(AddCustomXXXTimestamp)
 add_subdirectory(${CMAKE_SOURCE_DIR}/src)
 add_subdirectory(${CMAKE_SOURCE_DIR}/media/baseset)
+
+if(NOT CMAKE_CROSSCOMPILING)
+    foreach(tgt IN ITEMS ${host_tools_list})
+        add_executable(host${tgt} ALIAS ${tgt})
+    endforeach()
+
+    export(TARGETS ${host_tools_list} NAMESPACE host FILE host_tools.cmake)
+endif()
 
 add_dependencies(openttd
     find_version)
