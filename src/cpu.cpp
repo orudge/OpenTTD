@@ -16,13 +16,32 @@
 
 /* rdtsc for MSC_VER, uses simple inline assembly, or _rdtsc
  * from external win64.asm because VS2005 does not support inline assembly */
-#if defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64)) && !defined(RDTSC_AVAILABLE)
+#if defined(_MSC_VER) && !defined(RDTSC_AVAILABLE)
 #include <intrin.h>
 uint64 ottd_rdtsc()
 {
+#if defined(_M_ARM)
+	return __rdpmccntr64();
+#elif defined(_M_ARM64)
+	return _ReadStatusReg(ARM64_PMCCNTR_EL0);
+#else
 	return __rdtsc();
+#endif
 }
 #define RDTSC_AVAILABLE
+#endif
+
+/* rdtsc for macOS, or cross-platform with modern clang */
+#if defined (__has_builtin) && !defined(RDTSC_AVAILABLE)
+
+#if __has_builtin (__builtin_readcyclecounter)
+uint64 ottd_rdtsc()
+{
+	return __builtin_readcyclecounter();
+}
+#define RDTSC_AVAILABLE
+#endif
+
 #endif
 
 /* rdtsc for OS/2. Hopefully this works, who knows */
