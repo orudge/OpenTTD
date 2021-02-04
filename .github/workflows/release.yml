@@ -605,6 +605,109 @@ jobs:
         path: build/bundles
         retention-days: 5
 
+  windows-appx:
+    name: Windows Store
+    needs:
+    - source
+    - windows
+
+    if: needs.source.outputs.is_tag == 'true'
+    runs-on: windows-latest
+
+    steps:
+    - name: Download source
+      uses: actions/download-artifact@v2
+      with:
+        name: internal-source
+
+    - name: Unpack source
+      shell: bash
+      run: |
+        tar -xf source.tar.gz --strip-components=1
+
+    - name: Download x86 build
+      uses: actions/download-artifact@v2
+      with:
+        name: openttd-windows-x86
+
+    - name: Download x64 build
+      uses: actions/download-artifact@v2
+      with:
+        name: openttd-windows-x64
+
+    - name: Download arm64 build
+      uses: actions/download-artifact@v2
+      with:
+        name: openttd-windows-arm64
+
+    - name: Unpack builds
+      shell: bash
+      run: |
+        mkdir builds
+        cd builds
+        
+        function extract {
+            mkdir $1
+            
+            # Extract the artifact, which contains the release in zip format
+            unzip ../openttd-windows-$1*.zip -d $1
+            unzip $1/*.zip -d $1
+            rm -f $1/*.zip
+            mv $1/openttd-*/* $1/
+            
+            # Move the openttd.exe to the ARCH-binaries folder
+            mkdir $1-binaries
+            mv $1/openttd.exe $1-binaries/
+        }
+        
+        extract x86
+        extract x64
+        extract arm64
+        
+        # Use the "x86" folder for the common binaries (lang files, etc) and remove the others
+        mv x86 common-binaries
+        rm -rf x64 arm64
+
+    - name: Generate signing certificate
+      run: |
+        cd builds
+        call ..\os\windows\winstore\generate-key.bat "CN=test" password cert.pfx
+
+    - name: Prepare manifests
+      run: |
+        cd builds
+        mkdir manifests
+        
+        call ..\os\windows\winstore\prepare-manifests.bat manifests "CN=test" "OpenTTD.Test"
+
+    - name: Prepare binaries
+      shell: bash
+      run: |
+        cd builds
+        
+        # Copy the Windows Store assets
+        mkdir common-binaries/Assets
+        cp -R ../os/windows/winstore/assets-common/* common-binaries/Assets/
+        
+        mkdir Assets
+        cp -R ../os/windows/winstore/assets/* Assets/
+       
+    - name: Build
+      run: |
+        call os\windows\winstore\set-version.bat
+        cd builds
+        
+        mkdir output
+        makeappx build /f manifests\PackagingLayout.xml /op output\ /bv "${{ needs.source.outputs.version }}.0" /pv "%OTTD_VERSION%" /ca
+        SignTool sign /fd sha256 /a /f cert.pfx /p password "output\OpenTTD.appxbundle"
+
+    - name: Store appx
+      uses: actions/upload-artifact@v2
+      with:
+        name: openttd-windows-store
+        path: builds/output/OpenTTD.appxbundle
+        retention-days: 5
+
   upload:
     name: Upload
     needs:
