@@ -18,7 +18,7 @@
 		</Package>
 
 		<!-- ARM64 code package-->
-		<Package ID="OpenTTD-ARM64" ProcessorArchitecture="ARM64" ManifestPath="manifests\Package-ARM64.appxmanifest">
+		<Package ID="OpenTTD-ARM64" ProcessorArchitecture="arm64" ManifestPath="manifests\Package-ARM64.appxmanifest">
 			<Files>
 				<File DestinationPath="**" SourcePath="ARM64-binaries\**"/>
 				<File DestinationPath="Assets\**" SourcePath="Assets\**"/>

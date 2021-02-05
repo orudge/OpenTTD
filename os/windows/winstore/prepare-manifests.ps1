@@ -30,7 +30,7 @@ function Prepare-Manifest {
 # Prepare the application binary manifests
 Prepare-Manifest x86
 Prepare-Manifest x64
-Prepare-Manifest ARM64
+Prepare-Manifest arm64
 
 # Prepare the assets package manifest
 (Get-Content "$($PSScriptRoot)\manifests\AssetsPackage.appxmanifest").replace('$PUBLISHER$', $Publisher).replace('$IDENTITY_NAME$', $IdentityName).replace('$VERSION$', $AppVersion) | Set-Content "$($OutputFolder)\AssetsPackage.appxmanifest"
