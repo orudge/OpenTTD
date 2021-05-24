@@ -746,9 +746,32 @@ jobs:
       with:
         arch: ${{ matrix.host }}
 
+    - name: Save code signing certificate to disk
+      id: save_cert
+      uses: timheuer/base64-to-file@v1
+      with:
+        filename: 'openttd.p12'
+        # The certificates in a PKCS12 file encoded as a base64 string
+        encodedString: ${{ secrets.WIN_CERTIFICATE_P12 }}
+      # If this is run on a fork, there may not be a certificate set up - continue in this case
+      continue-on-error: true
+
+    - name: Import code signing certificate
+      shell: bash
+      # If this is run on a fork, there may not be a certificate set up - continue in this case
+      continue-on-error: true
+      env:
+        WIN_CODESIGN_P12: ${{ steps.save_cert.outputs.filePath }}
+        WIN_CODESIGN_PWD: ${{ secrets.WIN_CERTIFICATE_PASSWORD }}
+
+      run: |
+        certutil -f -p ${WIN_CODESIGN_PWD} -importpfx "${WIN_CODESIGN_P12}"
+
     - name: Build (with installer)
       if: needs.source.outputs.is_tag == 'true'
       shell: bash
+      env:
+        WIN_CODESIGN_CN: ${{ secrets.WIN_CERTIFICATE_COMMON_NAME }}
       run: |
         mkdir build
         cd build
@@ -761,6 +784,7 @@ jobs:
           -DOPTION_USE_NSIS=ON \
           -DHOST_BINARY_DIR=${GITHUB_WORKSPACE}/build-host \
           -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+          "-DCMAKE_SIGNING_CERTIFICATE=${WIN_CODESIGN_CN}"\
           # EOF
         echo "::endgroup::"
 
@@ -771,6 +795,8 @@ jobs:
     - name: Build (without installer)
       if: needs.source.outputs.is_tag != 'true'
       shell: bash
+      env:
+        WIN_CODESIGN_CN: ${{ secrets.WIN_CERTIFICATE_COMMON_NAME }}
       run: |
         mkdir build
         cd build
@@ -782,6 +808,7 @@ jobs:
           -DCMAKE_TOOLCHAIN_FILE="c:\vcpkg\scripts\buildsystems\vcpkg.cmake" \
           -DHOST_BINARY_DIR=${GITHUB_WORKSPACE}/build-host \
           -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+          "-DCMAKE_SIGNING_CERTIFICATE=${WIN_CODESIGN_CN}"\
           # EOF
         echo "::endgroup::"
 
@@ -808,6 +835,17 @@ jobs:
         # the end of this workflow.
         rm -f bundles/*.sha256
         echo "::endgroup::"
+
+    - name: Sign installer
+      if: needs.source.outputs.is_tag == 'true'
+      shell: bash
+      env:
+        WIN_CODESIGN_CN: ${{ secrets.WIN_CERTIFICATE_COMMON_NAME }}
+      # If this is run on a fork, there may not be a certificate set up - continue in this case
+      continue-on-error: true
+      run: |
+        cd ${GITHUB_WORKSPACE}/build/bundles
+        ../../os/windows/sign.bat *.exe "${WIN_CODESIGN_CN}"
 
     - name: Store bundles
       uses: actions/upload-artifact@v2
