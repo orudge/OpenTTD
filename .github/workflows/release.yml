@@ -757,7 +757,7 @@ jobs:
       continue-on-error: true
 
     - name: Import code signing certificate
-      shell: bash
+      shell: powershell
       # If this is run on a fork, there may not be a certificate set up - continue in this case
       continue-on-error: true
       env:
@@ -765,7 +765,8 @@ jobs:
         WIN_CODESIGN_PWD: ${{ secrets.WIN_CERTIFICATE_PASSWORD }}
 
       run: |
-        certutil -f -p ${WIN_CODESIGN_PWD} -importpfx "${WIN_CODESIGN_P12}"
+        $pwd = ConvertTo-SecureString $env:WIN_CODESIGN_PWD -AsPlainText -Force
+        Import-PfxCertificate -FilePath $env:WIN_CODESIGN_P12 -CertStoreLocation Cert:\CurrentUser\My -Password $pwd
 
     - name: Build (with installer)
       if: needs.source.outputs.is_tag == 'true'
