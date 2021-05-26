@@ -139,10 +139,10 @@ elseif(WIN32)
 
     set(CPACK_PACKAGE_FILE_NAME "openttd-#CPACK_PACKAGE_VERSION#-windows-${CPACK_SYSTEM_NAME}")
 
-    if(CMAKE_SIGNING_CERTIFICATE)
+    if(WINDOWS_CERTIFICATE_COMMON_NAME)
       add_custom_command(TARGET openttd
         POST_BUILD
-        COMMAND "${CMAKE_SOURCE_DIR}/os/windows/sign.bat" "$<TARGET_FILE:openttd>" "${CMAKE_SIGNING_CERTIFICATE}"
+        COMMAND "${CMAKE_SOURCE_DIR}/os/windows/sign.bat" "$<TARGET_FILE:openttd>" "${WINDOWS_CERTIFICATE_COMMON_NAME}"
       )
     endif()
 elseif(UNIX)
