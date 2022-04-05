@@ -977,6 +977,9 @@ jobs:
         cd builds
         mkdir manifests
 
+        REM Set the version environment variable
+        call ..\os\windows\winstore\set-version.bat x86-binaries\openttd.exe
+
         call ..\os\windows\winstore\prepare-manifests.bat manifests "CN=78024DA8-4BE4-4C77-B12E-547BBF7359D2" "57420OpenTTDDevelopers.OpenTTDofficial"
 
     - name: Prepare binaries
@@ -1008,7 +1011,7 @@ jobs:
         call "%VS_INSTALLDIR%\Common7\Tools\VsDevCmd.bat"
 
         REM Set the version environment variable
-        call os\windows\winstore\set-version.bat
+        call os\windows\winstore\set-version.bat builds\x86-binaries\openttd.exe
 
         cd builds
         mkdir output
