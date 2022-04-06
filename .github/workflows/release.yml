@@ -856,7 +856,7 @@ jobs:
     - source
     - windows
 
-    if: needs.source.outputs.is_tag == 'true'
+#    if: needs.source.outputs.is_tag == 'true'
     runs-on: windows-latest
 
     steps:
