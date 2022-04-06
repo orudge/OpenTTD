@@ -10,7 +10,9 @@ Param
 try
 {
     $versionInfo = (Get-Item "$ExePath").VersionInfo
-    $AppVersion = "$($versionInfo.FileMajorPart).$($versionInfo.FileMinorPart).$($versionInfo.FileBuildPart).$($versionInfo.FilePrivatePart)"
+
+	# Generate the app version - the build number (MS calls it revision) is always 0 because the Windows Store requires that
+    $AppVersion = "$($versionInfo.FileMajorPart).$($versionInfo.FileMinorPart).$($versionInfo.FileBuildPart).0"
 
     Write-Output "SET OTTD_VERSION=$($AppVersion)"
 }

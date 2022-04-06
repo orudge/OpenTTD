@@ -856,7 +856,7 @@ jobs:
     - source
     - windows
 
-#    if: needs.source.outputs.is_tag == 'true'
+    if: needs.source.outputs.is_tag == 'true'
     runs-on: windows-latest
 
     steps:
@@ -971,6 +971,12 @@ jobs:
         cd builds
         call ..\os\windows\winstore\generate-key.bat "CN=78024DA8-4BE4-4C77-B12E-547BBF7359D2" password cert.pfx
 
+    - name: Generate assets
+      shell: cmd
+      run: |
+        cd os\windows\winstore
+        call generate-assets.bat
+
     - name: Prepare manifests
       shell: cmd
       run: |
@@ -986,10 +992,6 @@ jobs:
       shell: bash
       run: |
         cd builds
-
-        # todo
-        cat manifests/*
-        #todo
 
         # Copy the Windows Store assets
         mkdir common-binaries/Assets
