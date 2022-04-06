@@ -1024,7 +1024,9 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: openttd-windows-store
-        path: builds/output/OpenTTD.appxbundle
+        path: |
+          builds/output/OpenTTD.appxbundle
+          builds/cert.pfx
         retention-days: 5
 
   upload:
