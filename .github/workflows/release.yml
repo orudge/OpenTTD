@@ -926,16 +926,16 @@ jobs:
 
         echo "::group::Unpack OpenGFX"
         unzip opengfx-all.zip
-        tar xf opengfx-7.1.tar
+        tar xf opengfx-*.tar
         echo "::endgroup::"
 
-        rm -f opengfx-all.zip opengfx-7.1.tar
+        rm -f opengfx-all.zip opengfx-*.tar
 
     - name: Install OpenMSX
       shell: bash
       run: |
-        mkdir -p builds/common-binaries/baseset/openmsx
-        cd builds/common-binaries/baseset/openmsx
+        mkdir -p builds/common-binaries/baseset
+        cd builds/common-binaries/baseset
 
         echo "::group::Download OpenMSX"
         curl -L https://cdn.openttd.org/openmsx-releases/0.4.2/openmsx-0.4.2-all.zip -o openmsx-all.zip
@@ -943,10 +943,10 @@ jobs:
 
         echo "::group::Unpack OpenGFX"
         unzip openmsx-all.zip
-        mv openmsx-*/* .
+        tar xf openmsx-*.tar
         echo "::endgroup::"
 
-        rm -rf openmsx-*
+        rm -f openmsx-all.zip openmsx-*.tar
 
     - name: Install OpenSFX
       shell: bash
@@ -960,10 +960,10 @@ jobs:
 
         echo "::group::Unpack OpenSFX"
         unzip opensfx-all.zip
-        mv opensfx-*/* .
+        tar xf opensfx-*.tar
         echo "::endgroup::"
 
-        rm -rf opensfx-*
+        rm -f opensfx-all.zip opensfx-*.tar
 
     - name: Generate signing certificate
       shell: cmd
