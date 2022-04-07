@@ -965,13 +965,20 @@ jobs:
 
         rm -f opensfx-all.zip opensfx-*.tar
 
-    - name: Generate signing certificate
-      shell: cmd
+    - name: Import code signing certificate
+      shell: powershell
+      # If this is run on a fork, there may not be a certificate set up - continue in this case
+      continue-on-error: true
       run: |
-        cd builds
-
-        REM We need to provide a signed .appx to the Windows Store, so generate a certificate with password 'password'
-        call ..\os\windows\winstore\generate-key.bat "CN=78024DA8-4BE4-4C77-B12E-547BBF7359D2" password cert.pfx
+        $tempFile = [System.IO.Path]::GetTempFileName()
+        $bytes = [System.Convert]::FromBase64String($env:WINDOWS_CERTIFICATE_P12)
+        [IO.File]::WriteAllBytes($tempFile, $bytes)
+        $pwd = ConvertTo-SecureString $env:WINDOWS_CERTIFICATE_PASSWORD -AsPlainText -Force
+        Import-PfxCertificate -FilePath $tempFile -CertStoreLocation Cert:\CurrentUser\My -Password $pwd
+        Remove-Item $tempFile
+      env:
+        WINDOWS_CERTIFICATE_P12: ${{ secrets.WINDOWS_CERTIFICATE_P12 }}
+        WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
 
     - name: Generate assets
       shell: cmd
@@ -1004,7 +1011,7 @@ jobs:
 
         cp manifests/*.xml .
 
-    - name: Build
+    - name: Build appx
       shell: cmd
       run: |
         REM Add the Windows SDK tools to the PATH
@@ -1020,17 +1027,24 @@ jobs:
         cd builds
         mkdir output
 
-        REM Build and sign the package
+        REM Build the package
         makeappx build /v /f PackagingLayout.xml /op output\ /bv %OTTD_VERSION% /pv %OTTD_VERSION% /ca
-        SignTool sign /fd sha256 /a /f cert.pfx /p password "output\OpenTTD.appxbundle"
+
+    - name: Sign appx
+      shell: bash
+      # If this is run on a fork, there may not be a certificate set up - continue in this case
+      continue-on-error: true
+      run: |
+        cd ${GITHUB_WORKSPACE}/builds/output
+        ../../os/windows/sign.bat *.appxbundle "${WINDOWS_CERTIFICATE_COMMON_NAME}"
+      env:
+        WINDOWS_CERTIFICATE_COMMON_NAME: ${{ secrets.WINDOWS_CERTIFICATE_COMMON_NAME }}
 
     - name: Store appx
       uses: actions/upload-artifact@v2
       with:
         name: openttd-windows-store
-        path: |
-          builds/output/OpenTTD.appxbundle
-          builds/cert.pfx
+        path: builds/output/OpenTTD.appxbundle
         retention-days: 5
 
   upload:
