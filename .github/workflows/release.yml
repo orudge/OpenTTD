@@ -1007,10 +1007,10 @@ jobs:
       run: |
         REM Add the Windows SDK tools to the PATH
 
-        echo|set /p="SET VS_INSTALLDIR=" > _vspath.bat
-        vswhere -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath >> _vspath.bat
-        call _vspath.bat
-        call "%VS_INSTALLDIR%\Common7\Tools\VsDevCmd.bat"
+        REM echo|set /p="SET VS_INSTALLDIR=" > _vspath.bat
+        REM vswhere -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath >> _vspath.bat
+        REM call _vspath.bat
+        REM call "%VS_INSTALLDIR%\Common7\Tools\VsDevCmd.bat"
 
         REM Set the version environment variable
         call os\windows\winstore\set-version.bat builds\x86-binaries\openttd.exe
