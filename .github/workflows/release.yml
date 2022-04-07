@@ -1031,12 +1031,16 @@ jobs:
         makeappx build /v /f PackagingLayout.xml /op output\ /bv %OTTD_VERSION% /pv %OTTD_VERSION% /ca
 
     - name: Sign appx
-      shell: bash
+      shell: cmd
       # If this is run on a fork, there may not be a certificate set up - continue in this case
       continue-on-error: true
       run: |
-        cd ${GITHUB_WORKSPACE}/builds/output
-        ../../os/windows/sign.bat *.appxbundle "${WINDOWS_CERTIFICATE_COMMON_NAME}"
+        REM Add the Windows SDK tools to the PATH
+        call _vspath.bat
+        call "%VS_INSTALLDIR%\Common7\Tools\VsDevCmd.bat"
+
+        cd builds/output
+        call ..\..\os\windows\sign.bat *.appxbundle "%WINDOWS_CERTIFICATE_COMMON_NAME%"
       env:
         WINDOWS_CERTIFICATE_COMMON_NAME: ${{ secrets.WINDOWS_CERTIFICATE_COMMON_NAME }}
 
