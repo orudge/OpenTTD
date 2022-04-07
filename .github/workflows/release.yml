@@ -995,7 +995,10 @@ jobs:
         REM Set the version environment variable
         call ..\os\windows\winstore\set-version.bat x86-binaries\openttd.exe
 
-        call ..\os\windows\winstore\prepare-manifests.bat manifests "CN=78024DA8-4BE4-4C77-B12E-547BBF7359D2" "57420OpenTTDDevelopers.OpenTTDofficial"
+        call ..\os\windows\winstore\prepare-manifests.bat manifests "CN=%WINDOWS_CERTIFICATE_COMMON_NAME%" "57420OpenTTDDevelopers.OpenTTDofficial"
+        REM was 78024DA8-4BE4-4C77-B12E-547BBF7359D2"
+      env:
+        WINDOWS_CERTIFICATE_COMMON_NAME: ${{ secrets.WINDOWS_CERTIFICATE_COMMON_NAME }}
 
     - name: Prepare binaries
       shell: bash
