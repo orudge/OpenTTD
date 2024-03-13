@@ -177,6 +177,11 @@ elseif(WIN32)
         POST_BUILD
         COMMAND "${CMAKE_SOURCE_DIR}/os/windows/sign.bat" "$<TARGET_FILE:openttd>" "${WINDOWS_CERTIFICATE_COMMON_NAME}"
       )
+    elseif(DEFINED ENV{AZURE_CODESIGN_PROFILE_NAME})
+      add_custom_command(TARGET openttd
+        POST_BUILD
+        COMMAND "${CMAKE_SOURCE_DIR}/os/windows/sign_azure.bat" "${BINARY_DESTINATION_DIR}"
+      )
     endif()
 elseif(UNIX)
     # With FHS, we can create deb/rpm/... Without it, they would be horribly broken
