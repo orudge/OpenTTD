@@ -34,4 +34,11 @@ jobs:
 #            --clientSecret ${{ secrets.AZURE_AD_APPLICATION_SECRET }}
 
     - name: Publish msix package
-      run: msstore publish ../openttd-windows-store/openttd-*.msixbundle -id 9NCJG5RVRR1C -v
+      shell: pwsh
+      run: |
+        $bundle = Get-ChildItem ../openttd-windows-store/openttd-*.msixbundle | Select-Object -First 1
+        if (-not $bundle) {
+          throw "No msixbundle found"
+        }
+
+        msstore publish $bundle.FullName -id 9NCJG5RVRR1C -v
