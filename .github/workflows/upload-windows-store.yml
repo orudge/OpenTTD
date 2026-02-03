@@ -36,7 +36,7 @@ jobs:
     - name: Publish msix package
       shell: pwsh
       run: |
-        $bundle = Get-ChildItem ../openttd-windows-store/openttd-*.msixbundle | Select-Object -First 1
+        $bundle = Get-ChildItem openttd-windows-store/openttd-*.msixbundle | Select-Object -First 1
         if (-not $bundle) {
           throw "No msixbundle found"
         }
