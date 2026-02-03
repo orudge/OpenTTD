@@ -26,12 +26,21 @@ jobs:
     - name: Configure Microsoft Store CLI
       uses: microsoft/microsoft-store-apppublisher@v1.1
 
-    - name: Reconfigure store credentials
-      run: msstore reconfigure `
-            --tenantId ${{ secrets.AZURE_TENANT_ID }} `
-            --sellerId ${{ secrets.WINSTORE_SELLER_ID }} `
-            --clientId ${{ secrets.AZURE_WINSTORE_APPLICATION_CLIENT_ID }} `
-            --clientSecret ${{ secrets.AZURE_WINSTORE_APPLICATION_SECRET }}
+#    - name: Reconfigure store credentials
+#      run: msstore reconfigure `
+#            --tenantId ${{ secrets.AZURE_TENANT_ID }} `
+#            --sellerId ${{ secrets.WINSTORE_SELLER_ID }} `
+#            --clientId ${{ secrets.AZURE_WINSTORE_APPLICATION_CLIENT_ID }} `
+#            --clientSecret ${{ secrets.AZURE_WINSTORE_APPLICATION_SECRET }}
+
+    - name: BLAH
+      shell: bash
+      run: |
+        ls -l
+        echo "blah"
+        ls -l openttd-windows-store/*
+        echo "blah"
+        ls -l openttd-windows-store/*/*
 
     - name: Publish msix package
       shell: pwsh
