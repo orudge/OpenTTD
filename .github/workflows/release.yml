@@ -31,26 +31,6 @@ jobs:
     with:
       version: ${{ needs.source.outputs.version }}
 
-  linux:
-    name: Linux (Generic)
-    needs: source
-
-    uses: ./.github/workflows/release-linux.yml
-    secrets: inherit
-
-    with:
-      survey_key: ${{ needs.source.outputs.survey_key }}
-
-  macos:
-    name: MacOS
-    needs: source
-
-    uses: ./.github/workflows/release-macos.yml
-    secrets: inherit
-
-    with:
-      survey_key: ${{ needs.source.outputs.survey_key }}
-
   windows:
     name: Windows
     needs: source
@@ -81,8 +61,6 @@ jobs:
     needs:
     - source
     - docs
-    - linux
-    - macos
     - windows
     - windows-store
 
@@ -116,43 +94,6 @@ jobs:
       version: ${{ needs.source.outputs.version }}
       folder: ${{ needs.source.outputs.folder }}
       trigger_type: ${{ needs.source.outputs.trigger_type }}
-
-  upload-steam:
-    name: Upload (Steam)
-    needs:
-    - source
-    - upload
-
-    # As windows-store is condition, we need to check ourselves if we need to run.
-    # The always() makes sure the rest is always evaluated.
-    # Yes, you even need to do this if you yourself don't depend on the condition.
-    # Additionally, only nightlies and releases go to Steam; not PRs.
-    if: always() && needs.source.result == 'success' && needs.upload.result == 'success' && (needs.source.outputs.trigger_type == 'new-master' || needs.source.outputs.trigger_type == 'new-tag')
-
-    uses: ./.github/workflows/upload-steam.yml
-    secrets: inherit
-
-    with:
-      version: ${{ needs.source.outputs.version }}
-      trigger_type: ${{ needs.source.outputs.trigger_type }}
-
-  upload-gog:
-    name: Upload (GOG)
-    needs:
-    - source
-    - upload
-
-    # As windows-store is condition, we need to check ourselves if we need to run.
-    # The always() makes sure the rest is always evaluated.
-    # Yes, you even need to do this if you yourself don't depend on the condition.
-    # Additionally, only releases go to GOG; not nightlies or PRs.
-    if: always() && needs.source.result == 'success' && needs.upload.result == 'success' && needs.source.outputs.trigger_type == 'new-tag'
-
-    uses: ./.github/workflows/upload-gog.yml
-    secrets: inherit
-
-    with:
-      version: ${{ needs.source.outputs.version }}
 
   upload-windows-store:
     name: Upload (Windows Store)
